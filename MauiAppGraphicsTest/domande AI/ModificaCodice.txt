@@ -1,0 +1,7 @@
+ho scaricato material UI, ma ho delle modifiche da fare.
+
+Nella cartella models ho separato i modelli e non gli ho messi in un unico file, quindi ho creato espositore.cs, expandableitem.cs, fiera.cs, padiglione.cs, stand.cs
+
+poi ho messo il codice che mi hai detto non nella pagina delle fiere ma nella mainPage, e quindi nel mainPageViewModel.
+
+dopodiché la modifica piu importante che devi apportare è che gli oggetti devono essere connessi fra di loro, e io devo solamente inserire una lista di fiere all'interno dell'oggetto, poi l'expander deve capire automaticamente come crearsi in modo da adattarsi agli oggetti e sotto oggetti che deve contenere e differenziare, non devo dover scrivere moltissime righe di codice nella view, ma deve essere una procedura dinamica che si adatta in base ai dati che gli metto nell'oggetto bindato all'interno del viewModel, modifica il codice che ritieni ci sia da modificare, ma prima di tutto spiegami le modifiche che andrai ad apportare e perché lo stai facendo

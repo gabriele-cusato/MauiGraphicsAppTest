@@ -1,0 +1,9 @@
+Adesso fai un analisi proponendomi le librerie migliori per realizzare una pagina con degli expander annidati, che permettano di visualizzare gli elementi uno dentro l'altro, ti spiego meglio.
+
+Ho bisogno che tu mi fornisca dei dati di esempio (proponi tu il metodo migliore per scrivere questi dati), in modo che sia disponibile una lista di fiere, per ogni fiera c'è una lista di padiglioni, e per ogni padiglione c'è una lista di stand, e per ogni stand c'è una lista di espositori.
+
+Per ogni cosa metti solamente dei dati di test, come per esempio il nome, cliente (cliente della fiera è il responsabile di gestione). cliente dei padiglioni saranno clienti diversi, i clienti di stand e espositori saranno gli stessi del padiglione a cui appartengono.
+
+dopo avermi fornito i dati di test in un formato facile poi da utilizzare, dovrai propormi la libreria che mi permette di realizzare degli expander che espandendosi fanno vedere i dati sotto delle cards che differenziano le cose, le cards (ovvero gli expander) dovranno aprirsi e chiudersi con un animazione bella da vedere e non dovranno causare lag. I dati devo poterli inserire dal viewModel della pagina usando i binding.
+
+Nel caso in cui tu debba usare 2 librerie insieme per fare questa cosa puoi farlo, pero dimmelo in modo chiaro e specifica i nomi dei pacchetti nuget che devo installare

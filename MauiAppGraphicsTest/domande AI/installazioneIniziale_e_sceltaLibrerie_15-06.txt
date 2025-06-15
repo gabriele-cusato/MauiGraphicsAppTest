@@ -1,0 +1,20 @@
+in questa chat creerò e svilupperò un progetto maui di test per provare ad implementare degli elementi grafici, animazioni, ecc... da librerie esterne, ne ho selezionate alcune:
+
+.NET MAUI Community Toolkit
+Syncfusion .NET MAUI Toolkit
+AlohaKit.Animations
+MauiKit
+DevExpress .NET MAUI Controls
+innanzi tutto confermami che queste
+
+innanzi tutto confermami che queste librerie sono gratuitre per uso commerciale, per ogniuna mandami il link dove c'è scritto in maniera ufficiale che le librerie sono gratutite ad uso commerciale o opensource (e quindi sono gratuite).
+
+Dopodiché consigliami altre librerie se ritieni che ce ne siano altre migliori o comparabili con quelle che ti ho mandato.
+
+le librerie che proponi e quelle che ti ho mandato oridnale facendo un mix di queste 3 caratteristiche:
+
+facilità d uso e implementazione
+flessibilità dei componenti offerti
+quantità di componenti offerti
+
+Dopodiché fammi un piccolo tutorial di come implementare le prime 3 che hai selezionato nel mio progetto, sappi che sto usando il modulo MVVM di community toolkit e quindi la mia struttura del progetto rispetta le linee guida.

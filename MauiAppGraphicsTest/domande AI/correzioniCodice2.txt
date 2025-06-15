@@ -1,0 +1,94 @@
+mi da 4 errori e 11 warning
+
+Ricorda che il mio progetto non si chiama MauiTestProject ma MauiAppGraphicsTest
+
+errore nella mainPage:
+
+Il tipo 'material:CardView' non è stato trovato. Verificare che sia presente un riferimento a un assembly e che tutti gli assembly di riferimento siano stati compilati.
+
+all'inizio ci sono le seguenti definizioni:
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiAppGraphicsTest.Views.MainPage"
+             xmlns:uranium="http://schemas.enisn-projects.io/dotnet/maui/uraniumui"
+             xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:MauiAppGraphicsTest.Controls"
+             xmlns:vm="clr-namespace:MauiAppGraphicsTest.ViewModels"
+             Title="Gestione Fiere Dinamica">
+
+in HierarchicalExpandedView:
+
+private View CreateExpanderForItem(IHierarchicalItem item, int depth)
+{
+    var expander = new Uranium.Maui.Material.ExpanderView
+    {
+        IsExpanded = item.IsExpanded,
+        Margin = new Thickness(depth * 20, 2, 0, 2)
+    };
+
+    // Bind IsExpanded
+    expander.SetBinding(Uranium.Maui.Material.ExpanderView.IsExpandedProperty,
+        new Binding(nameof(IHierarchicalItem.IsExpanded), source: item));
+
+    // Create Header
+    var header = CreateHeaderForItem(item);
+    expander.Header = header;
+
+    // Create Content if has children
+    if (item.HasChildren)
+    {
+        var contentStack = new StackLayout { Spacing = 2 };
+
+        foreach (var child in item.GetChildren())
+        {
+            if (child is IHierarchicalItem childItem)
+            {
+                var childView = CreateExpanderForItem(childItem, depth + 1);
+                contentStack.Children.Add(childView);
+            }
+        }
+
+        expander.Content = contentStack;
+    }
+
+    return expander;
+}
+
+Il nome di tipo o di spazio dei nomi 'Uranium' non è stato trovato. Probabilmente manca una direttiva using o un riferimento all'assembly.
+
+nella classe ci sono i seguenti import:
+
+using MauiAppGraphicsTest.Models;
+using System.Collections;
+using System.Windows.Input;
+using MauiAppGraphicsTest.Interfaces;
+using UraniumUI;
+
+in quel metodo c'è anche il warning:
+
+Il supporto dei valori Null dei tipi riferimento nel valore di tipo 'Uranium.Maui.Material.ExpanderView' non corrisponde al tipo di destinazione 'View'.
+
+sempre in hierarchical expanded view:
+
+'Frame' è obsoleto: 'Frame is obsolete as of .NET 9. Please use Border instead.'
+
+in invertedBoolConverter ci sono i seguenti warning:
+
+Il supporto dei valori Null dei tipi riferimento nel tipo di parametro 'value' di 'object InvertedBoolConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)' non corrisponde al membro implementato in modo implicito 'object? IValueConverter.Convert(object? value, Type targetType, object? parameter, CultureInfo culture)', probabilmente a causa degli attributi del supporto dei valori Null.
+
+Il supporto dei valori Null dei tipi riferimento nel tipo di parametro 'value' di 'object InvertedBoolConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)' non corrisponde al membro implementato in modo implicito 'object? IValueConverter.ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)', probabilmente a causa degli attributi del supporto dei valori Null.
+
+in hierarchicalDataTemplateSelector ci sono i seguenti warning:
+
+su tutte le proprietà data template definite:
+
+L'elemento proprietà 'FieraTemplate' non nullable deve contenere un valore non Null all'uscita dal costruttore. Prendere in considerazione l'aggiunta del modificatore 'required' o la dichiarazione di proprietà come nullable.
+
+in mainPage viewModel invece c'è il seguente errore:
+
+'Application.MainPage.get' è obsoleto: 'This property has been deprecated. For single-window applications, use Windows[0].Page. For multi-window applications, identify and use the appropriate Window object to access the desired Page. Additionally, each element features a Window property, accessible when it's part of the current window.'
+
+fai un unico codice di correzione nel pannello di destra dove metti i pezzi di codice corretti
+
