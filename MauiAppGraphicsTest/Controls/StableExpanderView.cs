@@ -96,7 +96,6 @@ namespace MauiAppGraphicsTest.Controls
                     HeightRequest = item.IsExpanded ? -1 : 0
                 };
 
-                // REGISTRA il mapping container -> item
                 _containerToItem[contentContainer] = item;
 
                 foreach (var child in item.GetChildren())
@@ -117,7 +116,8 @@ namespace MauiAppGraphicsTest.Controls
                     {
                         if (e.PropertyName == nameof(IHierarchicalItem.IsExpanded))
                         {
-                            await AnimateExpansion(item, contentContainer);
+                            // ANIMAZIONE UNIFICATA - tutto insieme
+                            await AnimateExpansionUnified(item, contentContainer, headerGrid);
                         }
                     };
                 }
@@ -144,144 +144,166 @@ namespace MauiAppGraphicsTest.Controls
             }
         }
 
-        private async Task AnimateExpansion(IHierarchicalItem item, StackLayout contentContainer)
+        // ANIMAZIONE UNIFICATA - freccia + contenuto + parent in sincrono
+        private async Task AnimateExpansionUnified(IHierarchicalItem item, StackLayout contentContainer, Grid headerGrid)
         {
-            Console.WriteLine($"ANIMATE: {item.DisplayName} -> {(item.IsExpanded ? "EXPAND" : "COLLAPSE")}");
-
             if (_animatingItems.ContainsKey(item) && _animatingItems[item])
-            {
-                Console.WriteLine($"SKIPPED: {item.DisplayName} already animating");
                 return;
-            }
 
             _animatingItems[item] = true;
 
             try
             {
-                await this.Dispatcher.DispatchAsync(async () =>
-                {
-                    if (item.IsExpanded)
-                    {
-                        await ExpandContent(contentContainer);
-                    }
-                    else
-                    {
-                        await CollapseContent(contentContainer);
-                    }
+                // Trova la freccia nel header
+                var arrowLabel = FindArrowInGrid(headerGrid);
+                var parentContainers = GetParentContainers(contentContainer);
 
-                    Console.WriteLine($"CALLING RefreshParentContainers for {item.DisplayName}");
-                    await RefreshParentContainers(contentContainer);
-                });
+                if (item.IsExpanded)
+                {
+                    await ExpandUnified(contentContainer, arrowLabel, parentContainers);
+                }
+                else
+                {
+                    await CollapseUnified(contentContainer, arrowLabel, parentContainers);
+                }
             }
             finally
             {
                 _animatingItems[item] = false;
-                Console.WriteLine($"FINISHED: {item.DisplayName}");
             }
         }
 
-        private async Task ExpandContent(StackLayout contentContainer)
+        private Label? FindArrowInGrid(Grid grid)
         {
-            contentContainer.IsVisible = true;
-            contentContainer.HeightRequest = -1;
-            await Task.Delay(20);
+            foreach (var child in grid.Children)
+            {
+                if (child is Label label && label.Text == "▶")
+                    return label;
+            }
+            return null;
+        }
 
-            var targetHeight = contentContainer.Height;
+        private async Task ExpandUnified(StackLayout contentContainer, Label? arrowLabel, List<StackLayout> parentContainers)
+        {
+            // CALCOLA altezza sommando i figli SENZA toccare il layout
+            double targetHeight = 0;
+
+            foreach (var child in contentContainer.Children)
+            {
+                if (child is View childView)
+                {
+                    // Stima altezza basata sul tipo di controllo
+                    if (childView is Border border)
+                    {
+                        // Border con header (circa 60px) + padding
+                        targetHeight += 70;
+                    }
+                    else if (childView is Label label)
+                    {
+                        // Label singola
+                        targetHeight += 30;
+                    }
+                    else
+                    {
+                        // Default per altri controlli
+                        targetHeight += 50;
+                    }
+                }
+            }
+
+            // Aggiungi spacing e padding del container
+            if (contentContainer.Children.Count > 0)
+            {
+                targetHeight += (contentContainer.Children.Count - 1) * contentContainer.Spacing;
+            }
+            targetHeight += contentContainer.Padding.Top + contentContainer.Padding.Bottom;
+
+            Console.WriteLine($"Calculated height: {targetHeight}"); // DEBUG
+
             if (targetHeight <= 0) return;
 
+            // SETUP iniziale - tutto a 0, nessun flash
+            contentContainer.IsVisible = true;
             contentContainer.HeightRequest = 0;
+            if (arrowLabel != null) arrowLabel.Rotation = 0;
 
-            var animation = new Animation(v =>
+            // ANIMAZIONE UNIFICATA
+            var animation = new Animation(progress =>
             {
-                this.Dispatcher.Dispatch(() =>
+                contentContainer.HeightRequest = targetHeight * progress;
+
+                if (arrowLabel != null)
+                    arrowLabel.Rotation = 90 * progress;
+
+                foreach (var parent in parentContainers)
                 {
-                    contentContainer.HeightRequest = v;
-                });
-            }, 0, targetHeight);
+                    parent.InvalidateMeasure();
+                }
+            }, 0, 1);
 
             var tcs = new TaskCompletionSource<bool>();
-            animation.Commit(contentContainer, "ExpandAnimation", 16, 350, Easing.CubicOut,
+            animation.Commit(contentContainer, "UnifiedExpandAnimation",
+                16, 250, Easing.SinOut,
                 (v, c) => tcs.SetResult(true));
 
             await tcs.Task;
+
+            // Finalizza con auto-sizing
             contentContainer.HeightRequest = -1;
+            if (arrowLabel != null) arrowLabel.Rotation = 90;
         }
 
-        private async Task CollapseContent(StackLayout contentContainer)
+        private async Task CollapseUnified(StackLayout contentContainer, Label? arrowLabel, List<StackLayout> parentContainers)
         {
             var currentHeight = contentContainer.Height;
-            if (currentHeight <= 0) currentHeight = contentContainer.HeightRequest;
             if (currentHeight <= 0) return;
 
-            contentContainer.HeightRequest = currentHeight;
-
-            var animation = new Animation(v =>
+            var animation = new Animation(progress =>
             {
-                this.Dispatcher.Dispatch(() =>
+                contentContainer.HeightRequest = currentHeight * (1 - progress);
+
+                if (arrowLabel != null)
+                    arrowLabel.Rotation = 90 * (1 - progress);
+
+                foreach (var parent in parentContainers)
                 {
-                    contentContainer.HeightRequest = v;
-                });
-            }, currentHeight, 0);
+                    parent.InvalidateMeasure();
+                }
+
+            }, 0, 1);
 
             var tcs = new TaskCompletionSource<bool>();
-            animation.Commit(contentContainer, "CollapseAnimation", 16, 300, Easing.CubicIn,
+            animation.Commit(contentContainer, "UnifiedCollapseAnimation",
+                16, 250, Easing.SinIn, // 16=fps, 200=durata
                 (v, c) => tcs.SetResult(true));
 
             await tcs.Task;
+
+            // Finalizza
             contentContainer.IsVisible = false;
+            if (arrowLabel != null) arrowLabel.Rotation = 0;
         }
 
-        // NUOVA funzione che aggiorna TUTTI i parent container
-        private async Task RefreshParentContainers(StackLayout changedContainer)
+        private List<StackLayout> GetParentContainers(StackLayout contentContainer)
         {
-            await Task.Delay(50);
-
-            Console.WriteLine($"=== REFRESH PARENT START ===");
-            Console.WriteLine($"Changed container height: {changedContainer.Height}, HeightRequest: {changedContainer.HeightRequest}");
-
-            var current = changedContainer.Parent;
-            int level = 0;
+            var parents = new List<StackLayout>();
+            var current = contentContainer.Parent;
 
             while (current != null)
             {
-                level++;
-                Console.WriteLine($"Level {level}: {current.GetType().Name}");
-
                 if (current is StackLayout parentContainer &&
-                    _containerToItem.ContainsKey(parentContainer))
+                    _containerToItem.ContainsKey(parentContainer) &&
+                    _containerToItem[parentContainer].IsExpanded)
                 {
-                    var parentItem = _containerToItem[parentContainer];
-                    Console.WriteLine($"  - Parent item: {parentItem.DisplayName}");
-                    Console.WriteLine($"  - Parent IsExpanded: {parentItem.IsExpanded}");
-                    Console.WriteLine($"  - Parent Height: {parentContainer.Height}");
-                    Console.WriteLine($"  - Parent HeightRequest: {parentContainer.HeightRequest}");
-                    Console.WriteLine($"  - Parent IsVisible: {parentContainer.IsVisible}");
-
-                    if (parentItem.IsExpanded)
-                    {
-                        var oldHeight = parentContainer.HeightRequest;
-                        parentContainer.HeightRequest = 0;
-                        parentContainer.HeightRequest = -1;
-                        parentContainer.InvalidateMeasure();
-
-                        Console.WriteLine($"  - UPDATED: {oldHeight} -> {parentContainer.HeightRequest}");
-
-                        if (parentContainer.Parent is VisualElement ve)
-                        {
-                            ve.InvalidateMeasure();
-                            Console.WriteLine($"  - Invalidated parent: {ve.GetType().Name}");
-                        }
-                    }
+                    parents.Add(parentContainer);
                 }
 
                 if (current is VisualElement element)
-                {
                     current = element.Parent;
-                }
                 else break;
             }
 
-            Console.WriteLine($"=== REFRESH PARENT END ===\n");
+            return parents;
         }
 
         private Grid CreateHeaderGrid(IHierarchicalItem item)
@@ -348,21 +370,7 @@ namespace MauiAppGraphicsTest.Controls
                 };
                 Grid.SetColumn(arrowLabel, 2);
 
-                if (item is Models.ExpandableItem expandableItem)
-                {
-                    expandableItem.PropertyChanged += async (s, e) =>
-                    {
-                        if (e.PropertyName == nameof(IHierarchicalItem.IsExpanded))
-                        {
-                            await this.Dispatcher.DispatchAsync(async () =>
-                            {
-                                var targetRotation = item.IsExpanded ? 90 : 0;
-                                await arrowLabel.RotateTo(targetRotation, 250, Easing.SpringOut);
-                            });
-                        }
-                    };
-                }
-
+                // RIMUOVI il PropertyChanged separato - ora gestito in AnimateExpansionUnified
                 grid.Children.Add(arrowLabel);
             }
 
